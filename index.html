@@ -7,9 +7,34 @@
   <link rel="stylesheet" href="./style.css?v=2" />
 </head>
 <body>
+ <body>
+
+<div id="passwordGate" class="password-gate">
+  <div class="password-box">
+    <h2>Quoizel Inventory Lookup</h2>
+    <p>Please enter the password to continue.</p>
+
+    <input
+      type="password"
+      id="passwordInput"
+      placeholder="Password"
+      autocomplete="off"
+    />
+
+    <button id="loginButton">Continue</button>
+
+    <p id="passwordError" class="password-error"></p>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
+
   <main class="inventory-app">
+
     <section class="lookup-panel">
-      <p class="lookup-intro">Search by SKU, partial SKU, or UPC:</p>
+      <p class="lookup-intro">
+        Search by SKU, partial SKU, or UPC:
+      </p>
 
       <input
         id="searchInput"
@@ -26,9 +51,14 @@
     </section>
 
     <section id="results" class="results"></section>
+
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="script.js"></script>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="script.js"></script>
+
+</body>
 </body>
 </html>
