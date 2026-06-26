@@ -128,10 +128,7 @@ function renderCard(item) {
           <div class="value">${item.dim_weight || "—"}</div>
         </div>
 
-        <div class="field">
-          <div class="label">Wholesale Price</div>
-          <div class="value">${formatCurrency(item.wholesale_price)}</div>
-        </div>
+    
       </div>
     </article>
   `;
