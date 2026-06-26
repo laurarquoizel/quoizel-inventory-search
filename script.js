@@ -29,21 +29,33 @@ input.addEventListener("input", () => {
     searchInventory(query);
   }, 300);
 });
+async function loadLastUpdated() {
+  const { data, error } = await db
+    .from("daily_inventory")
+    .select("updated_at")
+    .order("updated_at", { ascending: false })
+    .limit(1);
 
-lastUpdated.textContent =
-  "Inventory refreshed: " +
-  date.toLocaleString("en-US", {
-    timeZone: "America/New_York",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-    timeZoneName: "short"
-  });
+  if (error || !data || !data.length) {
+    lastUpdated.textContent = "";
+    return;
+  }
+
+  const date = new Date(data[0].updated_at);
+
+  lastUpdated.textContent =
+    "Inventory refreshed: " +
+    date.toLocaleString("en-US", {
+      timeZone: "America/New_York",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZoneName: "short"
+    });
 }
-
 async function searchInventory(query) {
   const safeQuery = query.replace(/[%_]/g, "");
 
