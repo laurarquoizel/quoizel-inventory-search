@@ -29,6 +29,7 @@ input.addEventListener("input", () => {
     searchInventory(query);
   }, 300);
 });
+
 async function loadLastUpdated() {
   const { data, error } = await db
     .from("daily_inventory")
@@ -41,21 +42,10 @@ async function loadLastUpdated() {
     return;
   }
 
-  const date = new Date(data[0].updated_at);
-
   lastUpdated.textContent =
-    "Inventory refreshed: " +
-    date.toLocaleString("en-US", {
-      timeZone: "America/New_York",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-      timeZoneName: "short"
-    });
+    "Inventory refreshed: " + formatDateTime(data[0].updated_at);
 }
+
 async function searchInventory(query) {
   const safeQuery = query.replace(/[%_]/g, "");
 
@@ -138,8 +128,6 @@ function renderCard(item) {
           <div class="label">Dim Weight</div>
           <div class="value">${item.dim_weight || "—"}</div>
         </div>
-
-    
       </div>
     </article>
   `;
@@ -199,6 +187,7 @@ function formatDate(value) {
   }
 
   return date.toLocaleDateString("en-US", {
+    timeZone: "America/New_York",
     month: "short",
     day: "numeric",
     year: "numeric"
@@ -208,35 +197,23 @@ function formatDate(value) {
 function formatDateTime(value) {
   if (!value) return "";
 
-  const date = new Date(value);
+  const raw = String(value);
+  const iso = raw.endsWith("Z") || raw.includes("+") ? raw : raw + "Z";
+  const date = new Date(iso);
 
   if (Number.isNaN(date.getTime())) {
     return "";
   }
 
   return date.toLocaleString("en-US", {
+    timeZone: "America/New_York",
     month: "short",
     day: "numeric",
     year: "numeric",
     hour: "numeric",
-    minute: "2-digit"
-  });
-}
-
-function formatCurrency(value) {
-  if (value === null || value === undefined || value === "") {
-    return "—";
-  }
-
-  const number = Number(value);
-
-  if (Number.isNaN(number)) {
-    return escapeHtml(value);
-  }
-
-  return number.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD"
+    minute: "2-digit",
+    hour12: true,
+    timeZoneName: "short"
   });
 }
 
