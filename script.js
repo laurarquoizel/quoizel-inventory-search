@@ -62,7 +62,9 @@ async function searchInventory(query) {
     return;
   }
 
-  if (!data || data.length === 0) {
+  const validData = (data || []).filter(item => item.sku && item.sku.trim() !== "");
+
+  if (validData.length === 0) {
     message.textContent = "";
     results.innerHTML = `
       <div class="empty-state">
@@ -72,7 +74,7 @@ async function searchInventory(query) {
     return;
   }
 
-  const sorted = data.sort((a, b) => {
+  const sorted = validData.sort((a, b) => {
     return Number(b.currently_available || 0) - Number(a.currently_available || 0);
   });
 
@@ -164,28 +166,14 @@ function getFutureStatusBadge(status) {
     return `<span class="badge badge-blue">—</span>`;
   }
 
-  const clean = String(status).toLowerCase();
-
-  if (clean === "confirmed") {
-    return `<span class="badge badge-green">${escapeHtml(status)}</span>`;
-  }
+  const clean = String(status).trim().toLowerCase();
 
   if (clean === "unconfirmed") {
     return `<span class="badge badge-yellow">${escapeHtml(status)}</span>`;
   }
 
-  return `<span class="badge badge-blue">${escapeHtml(status)}</span>`;
-}
-  }
-
-  const clean = String(status).toLowerCase();
-
-  if (clean.includes("confirmed")) {
+  if (clean === "confirmed") {
     return `<span class="badge badge-green">${escapeHtml(status)}</span>`;
-  }
-
-  if (clean.includes("unconfirmed")) {
-   return `<span class="badge badge-yellow">${escapeHtml(status)}</span>`;
   }
 
   return `<span class="badge badge-blue">${escapeHtml(status)}</span>`;
@@ -194,7 +182,9 @@ function getFutureStatusBadge(status) {
 function formatDate(value) {
   if (!value) return "—";
 
-  const date = new Date(value);
+  const raw = String(value);
+  const iso = raw.endsWith("Z") || raw.includes("+") ? raw : raw + "T00:00:00";
+  const date = new Date(iso);
 
   if (Number.isNaN(date.getTime())) {
     return escapeHtml(value);
