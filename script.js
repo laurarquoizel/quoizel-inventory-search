@@ -6,8 +6,11 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const input = document.getElementById("searchInput");
 const results = document.getElementById("results");
 const message = document.getElementById("message");
+const lastUpdated = document.getElementById("lastUpdated");
 
 let timer;
+
+loadLastUpdated();
 
 input.addEventListener("input", () => {
   clearTimeout(timer);
@@ -27,6 +30,21 @@ input.addEventListener("input", () => {
   }, 300);
 });
 
+async function loadLastUpdated() {
+  const { data, error } = await db
+    .from("daily_inventory")
+    .select("updated_at")
+    .order("updated_at", { ascending: false })
+    .limit(1);
+
+  if (error || !data || data.length === 0) {
+    lastUpdated.textContent = "";
+    return;
+  }
+
+  lastUpdated.textContent = `Last updated: ${formatDateTime(data[0].updated_at)}`;
+}
+
 async function searchInventory(query) {
   const safeQuery = query.replace(/[%_]/g, "");
 
@@ -34,7 +52,7 @@ async function searchInventory(query) {
     .from("daily_inventory")
     .select("*")
     .or(`sku.ilike.%${safeQuery}%,upc.ilike.%${safeQuery}%`)
-    .limit(25);
+    .limit(30);
 
   if (error) {
     console.error(error);
@@ -44,78 +62,130 @@ async function searchInventory(query) {
   }
 
   if (!data || data.length === 0) {
-    message.textContent = "No results found.";
-    results.innerHTML = "";
+    message.textContent = "";
+    results.innerHTML = `
+      <div class="empty-state">
+        No inventory records found. Try searching by full SKU, partial SKU, or UPC.
+      </div>
+    `;
     return;
   }
 
-  message.textContent = `${data.length} result${data.length === 1 ? "" : "s"} found.`;
+  const sorted = data.sort((a, b) => {
+    return Number(b.currently_available || 0) - Number(a.currently_available || 0);
+  });
 
-  results.innerHTML = data.map(renderCard).join("");
+  message.textContent = `${sorted.length} result${sorted.length === 1 ? "" : "s"} found.`;
+  results.innerHTML = sorted.map(renderCard).join("");
 }
 
 function renderCard(item) {
   const available = Number(item.currently_available || 0);
   const futureAvailable = Number(item.future_available || 0);
 
-  let availabilityClass = "red";
-  let availabilityText = "Out of Stock";
-
-  if (available > 0) {
-    availabilityClass = "green";
-    availabilityText = "In Stock";
-  } else if (futureAvailable > 0) {
-    availabilityClass = "orange";
-    availabilityText = "Future Inventory";
-  }
+  const inventoryBadge = getInventoryBadge(available, futureAvailable);
+  const productStatusBadge = getStatusBadge(item.status);
+  const futureStatusBadge = getFutureStatusBadge(item.future_status);
 
   return `
-    <article class="card">
-      <h2>${item.sku || ""}</h2>
-
-      <div class="grid">
+    <article class="inventory-card">
+      <div class="card-top">
         <div>
-          <div class="label">Inventory Status</div>
-          <div class="value ${availabilityClass}">${availabilityText}</div>
+          <h2 class="sku">${escapeHtml(item.sku || "")}</h2>
+          ${productStatusBadge}
+          <div class="upc">UPC: ${escapeHtml(item.upc || "—")}</div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-label">Available Now</div>
+          <div class="metric-value">${available}</div>
+          <div class="metric-note">${inventoryBadge}</div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-label">Future Available</div>
+          <div class="metric-value">${futureAvailable}</div>
+          <div class="metric-note">${formatFutureDate(item.future_date_available)}</div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-label">Future Status</div>
+          <div class="metric-value">${futureStatusBadge}</div>
+        </div>
+      </div>
+
+      <div class="card-bottom">
+        <div>
+          <div class="detail-label">Wholesale Price</div>
+          <div class="detail-value">${formatCurrency(item.wholesale_price)}</div>
         </div>
 
         <div>
-          <div class="label">Available Now</div>
-          <div class="value">${available}</div>
+          <div class="detail-label">Promo Price</div>
+          <div class="detail-value">${formatCurrency(item.promotional_price)}</div>
         </div>
 
         <div>
-          <div class="label">Future Available</div>
-          <div class="value">${futureAvailable}</div>
+          <div class="detail-label">Ships Via</div>
+          <div class="detail-value">${escapeHtml(item.shipped_via || "—")}</div>
         </div>
 
         <div>
-          <div class="label">Future Date</div>
-          <div class="value">${formatDate(item.future_date_available)}</div>
-        </div>
-
-        <div>
-          <div class="label">Product Status</div>
-          <div class="value">${item.status || ""}</div>
-        </div>
-
-        <div>
-          <div class="label">UPC</div>
-          <div class="value">${item.upc || ""}</div>
-        </div>
-
-        <div>
-          <div class="label">Ships Via</div>
-          <div class="value">${item.shipped_via || ""}</div>
-        </div>
-
-        <div>
-          <div class="label">Dim Weight</div>
-          <div class="value">${item.dim_weight || ""}</div>
+          <div class="detail-label">Dim Weight</div>
+          <div class="detail-value">${item.dim_weight || "—"}</div>
         </div>
       </div>
     </article>
   `;
+}
+
+function getInventoryBadge(available, futureAvailable) {
+  if (available > 0) {
+    return `<span class="badge badge-green">In Stock</span>`;
+  }
+
+  if (futureAvailable > 0) {
+    return `<span class="badge badge-orange">Future Inventory</span>`;
+  }
+
+  return `<span class="badge badge-red">Out of Stock</span>`;
+}
+
+function getStatusBadge(status) {
+  if (!status) return `<span class="badge badge-red">No Status</span>`;
+
+  const clean = String(status).toLowerCase();
+
+  if (clean.includes("active")) {
+    return `<span class="badge badge-green">${escapeHtml(status)}</span>`;
+  }
+
+  return `<span class="badge badge-red">${escapeHtml(status)}</span>`;
+}
+
+function getFutureStatusBadge(status) {
+  if (!status) return `<span class="badge badge-red">—</span>`;
+
+  const clean = String(status).toLowerCase();
+
+  if (clean.includes("confirmed")) {
+    return `<span class="badge badge-green">${escapeHtml(status)}</span>`;
+  }
+
+  if (clean.includes("unconfirmed")) {
+    return `<span class="badge badge-orange">${escapeHtml(status)}</span>`;
+  }
+
+  if (clean.includes("scheduled") || clean.includes("future")) {
+    return `<span class="badge badge-blue">${escapeHtml(status)}</span>`;
+  }
+
+  return `<span class="badge badge-blue">${escapeHtml(status)}</span>`;
+}
+
+function formatFutureDate(value) {
+  if (!value) return "No future date";
+  return `Available ${formatDate(value)}`;
 }
 
 function formatDate(value) {
@@ -124,7 +194,7 @@ function formatDate(value) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return value;
+    return escapeHtml(value);
   }
 
   return date.toLocaleDateString("en-US", {
@@ -132,4 +202,46 @@ function formatDate(value) {
     day: "numeric",
     year: "numeric"
   });
+}
+
+function formatDateTime(value) {
+  if (!value) return "";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function formatCurrency(value) {
+  if (value === null || value === undefined || value === "") return "—";
+
+  const number = Number(value);
+
+  if (Number.isNaN(number)) {
+    return escapeHtml(value);
+  }
+
+  return number.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
