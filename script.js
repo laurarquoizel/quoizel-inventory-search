@@ -1,3 +1,31 @@
+const PASSWORD = "Quoizel2026";
+
+const gate = document.getElementById("passwordGate");
+const app = document.getElementById("app");
+const passwordInput = document.getElementById("passwordInput");
+const loginButton = document.getElementById("loginButton");
+const passwordError = document.getElementById("passwordError");
+
+if (localStorage.getItem("inventory_auth") === "true") {
+  gate.style.display = "none";
+  app.style.display = "block";
+} else {
+  loginButton.addEventListener("click", unlock);
+  passwordInput.addEventListener("keydown", e => {
+    if (e.key === "Enter") unlock();
+  });
+}
+
+function unlock() {
+  if (passwordInput.value === PASSWORD) {
+    localStorage.setItem("inventory_auth","true");
+    gate.style.display = "none";
+    app.style.display = "block";
+  } else {
+    passwordError.textContent = "Incorrect password.";
+    passwordInput.value = "";
+  }
+}
 const SUPABASE_URL = "https://bxylkqzepjlkxwfnxwsz.supabase.co";
 const SUPABASE_KEY = "sb_publishable_u4rxrjpD7XWJGfCQ-rhWNw_4RIZvOHo";
 
