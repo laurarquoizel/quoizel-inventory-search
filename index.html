@@ -7,17 +7,22 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  
-      <p>Search by SKU or partial SKU.</p>
+  <main class="inventory-app">
+    <section class="lookup-panel">
+      <p class="lookup-intro">Search by SKU, partial SKU, or UPC.</p>
 
       <input
         id="searchInput"
+        class="lookup-input"
         type="search"
-        placeholder="Example: MAE8406MBK or MAE"
+        placeholder="Search by SKU or UPC..."
         autocomplete="off"
       />
 
-      <div id="message" class="message"></div>
+      <div class="lookup-meta">
+        <div id="lastUpdated" class="last-updated"></div>
+        <div id="message" class="message"></div>
+      </div>
     </section>
 
     <section id="results" class="results"></section>
