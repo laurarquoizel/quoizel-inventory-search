@@ -97,9 +97,10 @@ body {
   background: #dff3e6;
 }
 
-.badge-orange {
-  color: #a16207;
-  background: #fef3c7;
+.badge-yellow {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FCD34D;
 }
 
 .badge-red {
