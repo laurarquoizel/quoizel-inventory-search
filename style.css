@@ -171,24 +171,27 @@ body {
     color:#666;
 }
 
-.password-box input{
-    width:100%;
-    padding:14px;
-    border:1px solid #ccc;
-    border-radius:6px;
-    font-size:16px;
-    margin-bottom:15px;
+.password-box input,
+.password-box button {
+  width: 100%;
+  box-sizing: border-box;
+  display: block;
+  padding: 14px;
+  border-radius: 6px;
+  font-size: 16px;
 }
 
-.password-box button{
-    width:100%;
-    padding:14px;
-    background:#111;
-    color:#fff;
-    border:none;
-    border-radius:6px;
-    font-size:16px;
-    cursor:pointer;
+.password-box input {
+  border: 1px solid #ccc;
+  margin-bottom: 15px;
+}
+
+.password-box button {
+  background: #111;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+
 }
 
 .password-box button:hover{
