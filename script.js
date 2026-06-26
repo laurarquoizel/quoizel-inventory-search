@@ -37,7 +37,7 @@ async function loadLastUpdated() {
     .order("updated_at", { ascending: false })
     .limit(1);
 
-  if (error || !data || data.length === 0) {
+  if (error || !data || !data.length) {
     lastUpdated.textContent = "";
     return;
   }
@@ -83,56 +83,54 @@ function renderCard(item) {
   const available = Number(item.currently_available || 0);
   const futureAvailable = Number(item.future_available || 0);
 
-  const inventoryBadge = getInventoryBadge(available, futureAvailable);
-  const productStatusBadge = getStatusBadge(item.status);
-  const futureStatusBadge = getFutureStatusBadge(item.future_status);
-
   return `
     <article class="inventory-card">
-      <div class="card-top">
-        <div>
-          <h2 class="sku">${escapeHtml(item.sku || "")}</h2>
-          ${productStatusBadge}
-          <div class="upc">UPC: ${escapeHtml(item.upc || "—")}</div>
-        </div>
+      <h2 class="sku">${escapeHtml(item.sku || "")}</h2>
 
-        <div class="metric">
-          <div class="metric-label">Available Now</div>
-          <div class="metric-value">${available}</div>
-          <div class="metric-note">${inventoryBadge}</div>
-        </div>
-
-        <div class="metric">
-          <div class="metric-label">Future Available</div>
-          <div class="metric-value">${futureAvailable}</div>
-          <div class="metric-note">${formatFutureDate(item.future_date_available)}</div>
-        </div>
-
-        <div class="metric">
-          <div class="metric-label">Future Status</div>
-          <div class="metric-value">${futureStatusBadge}</div>
-        </div>
+      <div style="margin-bottom: 16px;">
+        ${getStatusBadge(item.status)}
       </div>
 
-      <div class="card-bottom">
-        <div>
-          <div class="detail-label">Wholesale Price</div>
-          <div class="detail-value">${formatCurrency(item.wholesale_price)}</div>
+      <div class="card-grid">
+        <div class="field">
+          <div class="label">Available Now</div>
+          <div class="value">${available}</div>
+          <div style="margin-top:8px;">${getInventoryBadge(available, futureAvailable)}</div>
         </div>
 
-        <div>
-          <div class="detail-label">Promo Price</div>
-          <div class="detail-value">${formatCurrency(item.promotional_price)}</div>
+        <div class="field">
+          <div class="label">Future Available</div>
+          <div class="value">${futureAvailable}</div>
         </div>
 
-        <div>
-          <div class="detail-label">Ships Via</div>
-          <div class="detail-value">${escapeHtml(item.shipped_via || "—")}</div>
+        <div class="field">
+          <div class="label">Future Date</div>
+          <div class="value">${formatDate(item.future_date_available)}</div>
         </div>
 
-        <div>
-          <div class="detail-label">Dim Weight</div>
-          <div class="detail-value">${item.dim_weight || "—"}</div>
+        <div class="field">
+          <div class="label">Future Status</div>
+          <div class="value">${getFutureStatusBadge(item.future_status)}</div>
+        </div>
+
+        <div class="field">
+          <div class="label">UPC</div>
+          <div class="value">${escapeHtml(item.upc || "—")}</div>
+        </div>
+
+        <div class="field">
+          <div class="label">Ships Via</div>
+          <div class="value">${escapeHtml(item.shipped_via || "—")}</div>
+        </div>
+
+        <div class="field">
+          <div class="label">Dim Weight</div>
+          <div class="value">${item.dim_weight || "—"}</div>
+        </div>
+
+        <div class="field">
+          <div class="label">Wholesale Price</div>
+          <div class="value">${formatCurrency(item.wholesale_price)}</div>
         </div>
       </div>
     </article>
@@ -152,7 +150,9 @@ function getInventoryBadge(available, futureAvailable) {
 }
 
 function getStatusBadge(status) {
-  if (!status) return `<span class="badge badge-red">No Status</span>`;
+  if (!status) {
+    return `<span class="badge badge-red">No Status</span>`;
+  }
 
   const clean = String(status).toLowerCase();
 
@@ -164,7 +164,9 @@ function getStatusBadge(status) {
 }
 
 function getFutureStatusBadge(status) {
-  if (!status) return `<span class="badge badge-red">—</span>`;
+  if (!status || String(status).trim() === "") {
+    return `<span class="badge badge-blue">—</span>`;
+  }
 
   const clean = String(status).toLowerCase();
 
@@ -176,16 +178,7 @@ function getFutureStatusBadge(status) {
     return `<span class="badge badge-orange">${escapeHtml(status)}</span>`;
   }
 
-  if (clean.includes("scheduled") || clean.includes("future")) {
-    return `<span class="badge badge-blue">${escapeHtml(status)}</span>`;
-  }
-
   return `<span class="badge badge-blue">${escapeHtml(status)}</span>`;
-}
-
-function formatFutureDate(value) {
-  if (!value) return "No future date";
-  return `Available ${formatDate(value)}`;
 }
 
 function formatDate(value) {
@@ -210,7 +203,7 @@ function formatDateTime(value) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return value;
+    return "";
   }
 
   return date.toLocaleString("en-US", {
@@ -223,7 +216,9 @@ function formatDateTime(value) {
 }
 
 function formatCurrency(value) {
-  if (value === null || value === undefined || value === "") return "—";
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
 
   const number = Number(value);
 
