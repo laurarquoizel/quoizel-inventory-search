@@ -171,7 +171,7 @@ function getFutureStatusBadge(status) {
   }
 
   if (clean.includes("unconfirmed")) {
-    return `<span class="badge badge-orange">${escapeHtml(status)}</span>`;
+   return `<span class="badge badge-yellow">${escapeHtml(status)}</span>`;
   }
 
   return `<span class="badge badge-blue">${escapeHtml(status)}</span>`;
