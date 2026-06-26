@@ -166,6 +166,20 @@ function getFutureStatusBadge(status) {
 
   const clean = String(status).toLowerCase();
 
+  if (clean === "confirmed") {
+    return `<span class="badge badge-green">${escapeHtml(status)}</span>`;
+  }
+
+  if (clean === "unconfirmed") {
+    return `<span class="badge badge-yellow">${escapeHtml(status)}</span>`;
+  }
+
+  return `<span class="badge badge-blue">${escapeHtml(status)}</span>`;
+}
+  }
+
+  const clean = String(status).toLowerCase();
+
   if (clean.includes("confirmed")) {
     return `<span class="badge badge-green">${escapeHtml(status)}</span>`;
   }
