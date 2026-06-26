@@ -1,0 +1,1 @@
+# quoizel-inventory-search
